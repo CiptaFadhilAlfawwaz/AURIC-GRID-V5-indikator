@@ -1,0 +1,1 @@
+# AURIC-GRID-V5-indikator
