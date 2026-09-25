@@ -1,0 +1,14 @@
+import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
+const root=path.resolve('out');fs.mkdirSync('.sites-runtime',{recursive:true});
+function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)]);}
+const scripts=new Set(),styles=new Set();for(const file of walk(root).filter(f=>f.endsWith('.html'))){const html=fs.readFileSync(file,'utf8');for(const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)){if(!/\bsrc=/.test(m[1])&&m[2])scripts.add("'sha256-"+crypto.createHash('sha256').update(m[2]).digest('base64')+"'");}for(const m of html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/g))styles.add("'sha256-"+crypto.createHash('sha256').update(m[1]).digest('base64')+"'");}
+const csp=`default-src 'self'; script-src 'self' ${[...scripts].join(' ')}; style-src 'self' ${[...styles].join(' ')}; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none'; upgrade-insecure-requests`;
+const headers={'Content-Security-Policy':csp,'X-Content-Type-Options':'nosniff','X-Frame-Options':'DENY','Referrer-Policy':'strict-origin-when-cross-origin','Permissions-Policy':'camera=(), microphone=(), geolocation=(), payment=(), usb=()','Cross-Origin-Opener-Policy':'same-origin'};
+if(process.env.ENABLE_HSTS==='1')headers['Strict-Transport-Security']='max-age=31536000';
+fs.writeFileSync(path.join(root,'_headers'),'/*\n'+Object.entries(headers).map(([k,v])=>'  '+k+': '+v).join('\n')+'\n  Cache-Control: public, max-age=0, must-revalidate\n\n/_next/static/*\n  Cache-Control: public, max-age=31536000, immutable\n');
+fs.writeFileSync('.sites-runtime/security-headers.json',JSON.stringify(headers,null,2));
+const config=fs.readFileSync('lib/site-config.ts','utf8');const origin=config.match(/siteUrl:\s*'([^']+)'/)[1];if(!origin.startsWith('https://')||origin.includes('example.com'))throw Error('Set real HTTPS siteUrl');
+fs.writeFileSync(path.join(root,'robots.txt'),`User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`);const routes=['/','/ea/auric-grid-v5/','/indicators/','/indicators/auric-smc-signal/','/indicators/auric-momentum/'];
+fs.writeFileSync(path.join(root,'sitemap.xml'),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${routes.map(route=>`<url><loc>${origin}${route}</loc></url>`).join('')}</urlset>`);
+fs.writeFileSync('vercel.json',JSON.stringify({buildCommand:'npm run build',outputDirectory:'out',headers:[{source:'/(.*)',headers:Object.entries(headers).map(([key,value])=>({key,value}))},{source:'/_next/static/(.*)',headers:[{key:'Cache-Control',value:'public, max-age=31536000, immutable'}]}]},null,2));
+console.log(`Hardened static export: ${scripts.size} script hashes; ${styles.size} style hashes; no unsafe-inline/eval.`);

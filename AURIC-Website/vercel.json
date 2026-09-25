@@ -1,0 +1,44 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "out",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' 'sha256-OBTN3RiyCV4Bq7dFqZ5a2pAXjnCcCYeTJMO2I/LYKeo=' 'sha256-ACfVEoUIarPuuktql0UrOCbiWGPmAj94veJ95x/VYHQ=' 'sha256-29DzhlupTbcLHM0ihs8amdzFt/MJc5DSCntbnJNI0Os=' 'sha256-Zlfly8nOcduUPLK/8T3P5QOvTvMaC7EHZ1+We1qKe24=' 'sha256-0LBw9PoMRNh9jdr/PoJ7DICrJzUEYWKCLIXrj/YO0Gg=' 'sha256-hvmr72UPhPPpV7KaM+KbV/Y2nqkdYmNMSFaDPLZtexc=' 'sha256-9zChoS+vVFSe9/ZqNOJDlt0IbHFES1a8VBOKUE25umc='; style-src 'self' ; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'none'; upgrade-insecure-requests"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin"
+        }
+      ]
+    },
+    {
+      "source": "/_next/static/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
